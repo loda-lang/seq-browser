@@ -14,11 +14,20 @@ def get_db_connection():
 @app.context_processor
 def utility_processor():
 
-    def a_dir(id):
-        return str(int(id/1000)).zfill(3)
-
     def a_number(id):
         return 'A' + str(id).zfill(6)
+
+    def prog_links(entry):
+        id = entry['oeis_id']
+        keywords = entry['keywords'].split(',')
+        links = []
+        if 'java' in keywords:
+            links.append('<a target="_blank" href="https://github.com/archmageirvine/joeis/blob/master/src/irvine/oeis/a{:03}/A{:06}.java">Java</a>'.format(int(id/1000), id))
+        if 'loda' in keywords:
+            links.append('<a target="_blank" href="https://loda-lang.org/edit/?oeis={}">LODA</a>'.format(id))
+        if len(links)>0:
+            return '({})'.format(', '.join(links))
+        return ''
 
     def select_keyword(k, active_keywords):
         if isinstance(active_keywords, str):
@@ -58,8 +67,8 @@ def utility_processor():
         new_keywords.sort()
         return ','.join(new_keywords)
 
-    return dict(a_dir=a_dir,
-                a_number=a_number,
+    return dict(a_number=a_number,
+                prog_links=prog_links,
                 select_keyword=select_keyword,
                 style_keyword=style_keyword,
                 switch_keyword=switch_keyword)
@@ -68,6 +77,11 @@ def utility_processor():
 @app.route('/')
 def index():
     conn = get_db_connection()
+    start = flask.request.args.get('start')
+    if start:
+        start = max(int(start),1)
+    else:
+        start = 1
     active_keywords = flask.request.args.get('keywords')
     where = ''
     if isinstance(active_keywords, str):
@@ -83,14 +97,16 @@ def index():
         if len(conditions) > 0:
             where = 'WHERE {}'.format(' AND '.join(conditions))
     print(where)
-    limit = 10
     count = conn.execute('SELECT count(*) FROM seq_entries {}'.format(where)).fetchall()[0][0]
-    show = min(count, limit)
-    entries = conn.execute('SELECT * FROM seq_entries {} LIMIT {}'.format(where,limit)).fetchall()
+    batch = 100
+    entries = conn.execute('SELECT * FROM seq_entries {} LIMIT {} OFFSET {}'.format(where, batch, start-1)).fetchall()
+    end = min(count, start - 1 + batch)
     conn.close()
     return flask.render_template('index.html',
+                                 batch=batch,
                                  count=count,
-                                 show=show,
+                                 start=start,
+                                 end=end,
                                  entries=entries,
                                  oeis_keywords=keywords.get_oeis_keywords(),
                                  loda_keywords=keywords.get_loda_keywords(),

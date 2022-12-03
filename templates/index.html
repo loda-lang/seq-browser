@@ -2,40 +2,54 @@
 
 {% block content %}
 
-<p>
-Click on one or more keywords to filter.
+<p>Click on one or more keywords to filter.</p>
 
 <p>
-<span class="keyword-name"><a target="blank_" href="https://oeis.org/wiki/Clear-cut_examples_of_keywords">OEIS Keywords:</a></span>
-{% for k in oeis_keywords %}
-<a href="{{ url_for('index', id=id, keywords=switch_keyword(k, active_keywords)) }}"><span class="keyword-{{ style_keyword(k, active_keywords) }}">{{ select_keyword(k, active_keywords) }}</span></a>
-{% endfor %}
+    <span class="keyword-name"><a target="blank_" href="https://oeis.org/wiki/Clear-cut_examples_of_keywords">OEIS
+            Keywords:</a></span>
+    {% for k in oeis_keywords %}
+    <a href="{{ url_for('index', start=start, keywords=switch_keyword(k, active_keywords)) }}"><span
+            class="keyword-{{ style_keyword(k, active_keywords) }}">{{ select_keyword(k, active_keywords) }}</span></a>
+    {% endfor %}
 </p>
 
 <p>
-<span class="keyword-name">Program Keywords:</span>
-{% for k in loda_keywords %}
-<a href="{{ url_for('index', id=id, keywords=switch_keyword(k, active_keywords)) }}"><span class="keyword-{{ style_keyword(k, active_keywords) }}">{{ select_keyword(k, active_keywords) }}</span></a>
-{% endfor %}
+    <span class="keyword-name">Program Keywords:</span>
+    {% for k in loda_keywords %}
+    <a href="{{ url_for('index', start=start, keywords=switch_keyword(k, active_keywords)) }}"><span
+            class="keyword-{{ style_keyword(k, active_keywords) }}">{{ select_keyword(k, active_keywords) }}</span></a>
+    {% endfor %}
 </p>
-    
-<p>
-Showing {{ show }} of {{ count }} results:
-</p>
+
+<p><b>
+        {% if count == 0 %}
+        No results.
+        {% else %}
+        Showing {{ start }}-{{ end }} of {{ count }} results:
+        {% endif %}
+    </b></p>
+
+{% include 'pages.html' %}
 
 <ul>
-{% for entry in entries %}
-<li>
- <a target="_blank" href="https://oeis.org/{{ a_number(entry['oeis_id']) }}">{{ a_number(entry['oeis_id']) }}</a>:
- {{ entry['name'] }}
-(<a target="_blank" href="https://loda-lang.org/edit/?oeis={{ entry['oeis_id'] }}">LODA</a>,
- <a target="_blank" href="https://github.com/archmageirvine/joeis/blob/master/src/irvine/oeis/a{{ a_dir(entry['oeis_id']) }}/{{ a_number(entry['oeis_id']) }}.java">Java</a>)
-</li>
-{% endfor %}
+    {% for entry in entries %}
+    <li>
+        <a target="_blank" href="https://oeis.org/{{ a_number(entry['oeis_id']) }}">{{ a_number(entry['oeis_id'])
+            }}</a>:
+        {{ entry['name'] }} {{ prog_links(entry)|safe }}
+    </li>
+    {% endfor %}
 </ul>
 
-<p><a href="https://github.com/loda-lang/loda-programs#license">License Info</a></p>
+{% include 'pages.html' %}
 
-<script async="" defer="" src="https://buttons.github.io/buttons.js"></script>
+<br>
+<br>
+<p>
+    License Info: See
+    <a target="_blank" href="http://oeis.org/wiki/The_OEIS_End-User_License_Agreement">OEIS End-User License
+        Agreement</a>.
+    LODA is published under <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+</p>
 
 {% endblock %}
