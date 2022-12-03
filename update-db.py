@@ -36,8 +36,9 @@ def process_oeis_entry(oeis_entry):
     parsed_entry = parse_oeis_entry(oeis_id, main_content, bfile_content)
     binary_keywords = 0
     for k in parsed_entry.keywords:
-        bit = 1 << keyword_index[k]
-        binary_keywords = binary_keywords | bit
+        if k in keyword_index:
+            bit = 1 << keyword_index[k]
+            binary_keywords = binary_keywords | bit
     result = (
         parsed_entry.oeis_id,
         parsed_entry.name,

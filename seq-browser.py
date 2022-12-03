@@ -71,7 +71,7 @@ def index():
     active_keywords = flask.request.args.get('keywords')
     where = ''
     if isinstance(active_keywords, str):
-        keyword_index = keywords.get_keyword_index()
+        keyword_index = keywords.keywords_to_index()
         positive_bits = 0
         negative_bits = 0
         for k in active_keywords.split(','):
