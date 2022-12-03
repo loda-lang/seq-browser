@@ -70,7 +70,7 @@ def update_repo(url, path):
 
 
 def main():
-    update_repo('https://github.com/loda-lang/loda-cpp.git', '/tmp/loda')
+    update_repo('https://github.com/loda-lang/loda-programs.git', '/tmp/loda-programs')
     update_repo('https://github.com/archmageirvine/joeis.git', '/tmp/joeis')
     os.makedirs('logfiles', exist_ok=True)
     fetch_oeis_database.main()
