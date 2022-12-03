@@ -4,6 +4,7 @@ import os
 import sys
 import logging
 import sqlite3
+import subprocess
 import concurrent.futures
 
 sys.path.append('sidneycadot/oeis')
@@ -57,7 +58,20 @@ def process_database_entries(file_in, file_out):
         logger.info("Processed all database entries in {}.".format(timer.duration_string()))
 
 
+def update_repo(url, path):
+    if not os.path.isdir(os.path.join(path, '.git')):
+        p = subprocess.run(['git', 'clone', url, path])
+        if p.returncode != 0:
+            exit(1)
+    else:
+        p = subprocess.run(['git', 'pull'], cwd=path)
+        if p.returncode != 0:
+            exit(1)
+
+
 def main():
+    update_repo('https://github.com/loda-lang/loda-cpp.git', '/tmp/loda')
+    update_repo('https://github.com/archmageirvine/joeis.git', '/tmp/joeis')
     os.makedirs('logfiles', exist_ok=True)
     fetch_oeis_database.main()
     with setup_logging('logfiles/oeis_parsed.log'):
