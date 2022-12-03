@@ -71,16 +71,25 @@ def index():
     active_keywords = flask.request.args.get('keywords')
     where = ''
     if isinstance(active_keywords, str):
-        conditions = []
+        keyword_index = keywords.get_keyword_index()
+        positive_bits = 0
+        negative_bits = 0
         for k in active_keywords.split(','):
             k = k.strip()
             if len(k) == 0:
                 continue
             if k[0]=='-':
-                conditions.append('keywords NOT LIKE \'%{}%\''.format(k[1:]))
-            else:
-                conditions.append('keywords LIKE \'%{}%\''.format(k))
-        if len(conditions) > 0:
+                r = k[1:]
+                if r in keyword_index:
+                    negative_bits += 1 << keyword_index[r]
+            elif k in keyword_index:
+                positive_bits += 1 << keyword_index[k]
+        conditions = []
+        if positive_bits > 0:
+            conditions.append('keywords & {} = {}'.format(positive_bits,positive_bits))
+        if negative_bits > 0:
+            conditions.append('keywords & {} = 0'.format(negative_bits))
+        if len(conditions)>0:
             where = 'WHERE {}'.format(' AND '.join(conditions))
     print(where)
     limit = 10

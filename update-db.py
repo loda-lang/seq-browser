@@ -7,6 +7,7 @@ import sqlite3
 import concurrent.futures
 
 sys.path.append('sidneycadot/oeis')
+from keywords import keywords_to_index
 from sidneycadot.oeis.oeis_entry    import parse_oeis_entry
 from sidneycadot.oeis.timer         import start_timer
 from sidneycadot.oeis.exit_scope    import close_when_done
@@ -16,12 +17,15 @@ import sidneycadot.oeis.fetch_oeis_database as fetch_oeis_database
 
 logger = logging.getLogger(__name__)
 
+keyword_index = keywords_to_index()
+
+
 def create_database_schema(dbconn):
     schema = """
              CREATE TABLE IF NOT EXISTS seq_entries (
                  oeis_id               INTEGER  PRIMARY KEY NOT NULL,
                  name                  TEXT     NOT NULL,
-                 keywords              TEXT     NOT NULL
+                 keywords              BIGINT   NOT NULL
              );
              """
     dbconn.execute(schema)
@@ -30,10 +34,14 @@ def create_database_schema(dbconn):
 def process_oeis_entry(oeis_entry):
     (oeis_id, main_content, bfile_content) = oeis_entry
     parsed_entry = parse_oeis_entry(oeis_id, main_content, bfile_content)
+    binary_keywords = 0
+    for k in parsed_entry.keywords:
+        bit = 1 << keyword_index[k]
+        binary_keywords = binary_keywords | bit
     result = (
         parsed_entry.oeis_id,
         parsed_entry.name,
-        ",".join(str(keyword) for keyword in parsed_entry.keywords)
+        binary_keywords
     )
     return result
 
