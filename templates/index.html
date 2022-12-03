@@ -13,7 +13,7 @@ Click on one or more keywords to filter.
 </p>
 
 <p>
-    <span class="keyword-name">More Keywords:</span> TBD
+<span class="keyword-name">More Keywords:</span> formula java loda pari
 </p>
     
 <p>
@@ -23,10 +23,10 @@ Showing {{ show }} of {{ count }} results:
 <ul>
 {% for entry in entries %}
 <li>
- <a target="_blank" href="https://oeis.org/{{ a_number(entry['oeis_id']) }}">{{ a_number(entry['oeis_id']) }}</a>
-(<a target="_blank" href="https://loda-lang.org/edit/?oeis={{ entry['oeis_id'] }}">loda</a>,
- <a target="_blank" href="https://github.com/archmageirvine/joeis/blob/master/src/irvine/oeis/a{{ a_dir(entry['oeis_id']) }}/{{ a_number(entry['oeis_id']) }}.java">joeis</a>): 
-{{ entry['name'] }}
+ <a target="_blank" href="https://oeis.org/{{ a_number(entry['oeis_id']) }}">{{ a_number(entry['oeis_id']) }}</a>:
+ {{ entry['name'] }}
+(<a target="_blank" href="https://loda-lang.org/edit/?oeis={{ entry['oeis_id'] }}">LODA</a>,
+ <a target="_blank" href="https://github.com/archmageirvine/joeis/blob/master/src/irvine/oeis/a{{ a_dir(entry['oeis_id']) }}/{{ a_number(entry['oeis_id']) }}.java">Java</a>)
 </li>
 {% endfor %}
 </ul>
