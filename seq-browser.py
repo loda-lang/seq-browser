@@ -110,4 +110,5 @@ def index():
                                  entries=entries,
                                  oeis_keywords=keywords.get_oeis_keywords(),
                                  loda_keywords=keywords.get_loda_keywords(),
+                                 all_keywords=keywords.get_all_keywords(),
                                  active_keywords=active_keywords)

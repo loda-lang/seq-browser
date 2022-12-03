@@ -6,3 +6,9 @@ def get_oeis_keywords():
 
 def get_loda_keywords():
     return ['java', 'loda']
+
+def get_all_keywords():
+    keywords = get_oeis_keywords()
+    keywords.extend(get_loda_keywords())
+    keywords.sort()
+    return keywords

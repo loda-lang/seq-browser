@@ -1,5 +1,5 @@
 <p>
-    {% if start > 1 %}
+    {% if start > 1 and count > 0 %}
     <a href="{{ url_for('index', start=start-batch, keywords=active_keywords) }}">&laquo; Previous</a>
     {% endif %}
     {% if start > 1 and end < count %}

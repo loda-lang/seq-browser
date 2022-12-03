@@ -2,20 +2,8 @@
 
 {% block content %}
 
-<p>Click on one or more keywords to filter.</p>
-
-<p>
-    <span class="keyword-name"><a target="blank_" href="https://oeis.org/wiki/Clear-cut_examples_of_keywords">OEIS
-            Keywords:</a></span>
-    {% for k in oeis_keywords %}
-    <a href="{{ url_for('index', start=start, keywords=switch_keyword(k, active_keywords)) }}"><span
-            class="keyword-{{ style_keyword(k, active_keywords) }}">{{ select_keyword(k, active_keywords) }}</span></a>
-    {% endfor %}
-</p>
-
-<p>
-    <span class="keyword-name">Program Keywords:</span>
-    {% for k in loda_keywords %}
+<p>Click keywords to filter:
+    {% for k in all_keywords %}
     <a href="{{ url_for('index', start=start, keywords=switch_keyword(k, active_keywords)) }}"><span
             class="keyword-{{ style_keyword(k, active_keywords) }}">{{ select_keyword(k, active_keywords) }}</span></a>
     {% endfor %}
