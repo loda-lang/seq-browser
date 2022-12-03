@@ -31,6 +31,12 @@ def create_database_schema(dbconn):
 def process_oeis_entry(oeis_entry):
     (oeis_id, main_content, bfile_content) = oeis_entry
     parsed_entry = parse_oeis_entry(oeis_id, main_content, bfile_content)
+    keywords = parsed_entry.keywords
+    prefix = int(parsed_entry.oeis_id/1000)
+    if os.path.exists('/tmp/loda-programs/oeis/{:03}/A{:06}.asm'.format(prefix, parsed_entry.oeis_id)):
+        keywords.append('loda')
+    if os.path.exists('/tmp/joeis/src/irvine/oeis/a{:03}/A{:06}.java'.format(prefix, parsed_entry.oeis_id)):
+        keywords.append('java')
     result = (
         parsed_entry.oeis_id,
         parsed_entry.name,

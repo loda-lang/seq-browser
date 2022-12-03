@@ -13,7 +13,10 @@ Click on one or more keywords to filter.
 </p>
 
 <p>
-<span class="keyword-name">More Keywords:</span> formula java loda pari
+<span class="keyword-name">Program Keywords:</span>
+{% for k in loda_keywords %}
+<a href="{{ url_for('index', id=id, keywords=switch_keyword(k, active_keywords)) }}"><span class="keyword-{{ style_keyword(k, active_keywords) }}">{{ select_keyword(k, active_keywords) }}</span></a>
+{% endfor %}
 </p>
     
 <p>
