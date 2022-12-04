@@ -2,10 +2,11 @@
 
 {% block content %}
 
-<p>Click keywords to filter:
+<p>Filter by keywords:
     {% for k in all_keywords %}
     <a href="{{ url_for('index', start=start, keywords=switch_keyword(k, active_keywords)) }}"><span
-            class="keyword-{{ style_keyword(k, active_keywords) }}">{{ select_keyword(k, active_keywords) }}</span></a>
+            title="{{ keyword_descriptions[k] }}" class="keyword-{{ style_keyword(k, active_keywords) }}">{{
+            select_keyword(k, active_keywords) }}</span></a>
     {% endfor %}
 </p>
 

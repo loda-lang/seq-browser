@@ -108,7 +108,6 @@ def index():
                                  start=start,
                                  end=end,
                                  entries=entries,
-                                 oeis_keywords=keywords.get_oeis_keywords(),
-                                 loda_keywords=keywords.get_loda_keywords(),
-                                 all_keywords=keywords.get_all_keywords(),
+                                 all_keywords=keywords.get_keywords(),
+                                 keyword_descriptions=keywords.get_keyword_descriptions(),
                                  active_keywords=active_keywords)
