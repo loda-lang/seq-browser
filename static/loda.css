@@ -37,14 +37,16 @@ a.page-link.is-active {
     display: grid;
     grid-template-columns: minmax(auto, max-content) minmax(25%, auto);
 }
-/* alternating row color */
-.sequence-list > div:nth-child(4n+1),
-.sequence-list > div:nth-child(4n+2) {
-    background: #f7f8fc;
-}
 .sequence-list .col0, 
 .sequence-list .col1 {
     padding: 4px;
+    border-top: 1px solid #ccc;
+}
+.sequence-list .col0 {
+    padding-left: 0px;
+}
+.sequence-list .col1 {
+    padding-right: 0px;
 }
 .sequence-list .linkbox {
     float: right;
