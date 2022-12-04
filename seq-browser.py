@@ -26,7 +26,7 @@ def utility_processor():
         if 'loda' in keywords:
             links.append('<a target="_blank" href="https://loda-lang.org/edit/?oeis={}">LODA</a>'.format(id))
         if len(links)>0:
-            return '({})'.format(', '.join(links))
+            return '{}'.format(', '.join(links))
         return ''
 
     def select_keyword(k, active_keywords):

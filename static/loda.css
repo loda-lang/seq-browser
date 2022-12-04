@@ -42,9 +42,11 @@ a.page-link.is-active {
 .sequence-list > div:nth-child(4n+2) {
     background: #f7f8fc;
 }
-.col0, .col1 {
+.sequence-list .col0, 
+.sequence-list .col1 {
     padding: 4px;
 }
-.col1 {
-    padding-left: 0;
+.sequence-list .linkbox {
+    float: right;
+    margin-left: 1em;
 }

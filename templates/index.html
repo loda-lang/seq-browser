@@ -23,8 +23,8 @@
 <div class="sequence-list">
     {% for entry in entries %}
     <div class="col0"><a target="_blank" href="https://oeis.org/{{ a_number(entry['oeis_id']) }}">{{ a_number(entry['oeis_id'])
-            }}</a>:</div>
-    <div class="col1">{{ entry['name'] }} {{ prog_links(entry)|safe }}</div>
+            }}</a></div>
+    <div class="col1"><div class="linkbox">{{ prog_links(entry)|safe }}</div><div class="sequence-description">{{ entry['name'] }}</div></div>
     {% endfor %}
 </div>
 
