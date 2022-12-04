@@ -32,16 +32,19 @@ a.page-link.is-active {
     background: #cbcbcb;
 }
 
-/* .sequence-list */
-ul.sequence-list {
-    padding: 0;
-    list-style: none;
-    margin-left: 0;
+/* sequence list */
+.sequence-list {
+    display: grid;
+    grid-template-columns: minmax(auto, max-content) minmax(25%, auto);
 }
-.sequence-list li:nth-child(odd) {
+/* alternating row color */
+.sequence-list > div:nth-child(4n+1),
+.sequence-list > div:nth-child(4n+2) {
     background: #f7f8fc;
 }
-.sequence-list li {
-    margin-left: 0;
+.col0, .col1 {
     padding: 4px;
+}
+.col1 {
+    padding-left: 0;
 }
