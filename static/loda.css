@@ -31,3 +31,17 @@ a.page-link.is-active {
 .keyword-name {
     background: #cbcbcb;
 }
+
+/* .sequence-list */
+ul.sequence-list {
+    padding: 0;
+    list-style: none;
+    margin-left: 0;
+}
+.sequence-list li:nth-child(odd) {
+    background: #f7f8fc;
+}
+.sequence-list li {
+    margin-left: 0;
+    padding: 4px;
+}

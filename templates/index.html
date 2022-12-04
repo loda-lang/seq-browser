@@ -20,7 +20,7 @@
 
 {% include 'pages.html' %}
 
-<ul>
+<ul class="sequence-list">
     {% for entry in entries %}
     <li>
         <a target="_blank" href="https://oeis.org/{{ a_number(entry['oeis_id']) }}">{{ a_number(entry['oeis_id'])
