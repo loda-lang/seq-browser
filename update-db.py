@@ -17,6 +17,9 @@ from sidneycadot.oeis.oeis_entry import parse_oeis_entry
 
 logger = logging.getLogger(__name__)
 
+java_programs_path = '/tmp/joeis'
+loda_programs_path = '/tmp/loda-programs'
+
 def create_database_schema(dbconn):
     schema = """
              CREATE TABLE IF NOT EXISTS seq_entries (
@@ -34,8 +37,11 @@ def process_oeis_entry(oeis_entry):
     entry = parse_oeis_entry(oeis_id, main_content, bfile_content)
     keywords = entry.keywords
     contributors = []
+    # TODO: add also other contributors
     if entry.author and len(entry.author) > 0:
         contributors.append(entry.author.replace("_", ""))
+    if entry.formulas and len(entry.formulas) > 0:
+        keywords.append('formula')
     if entry.maple_programs and len(entry.maple_programs) > 0:
         keywords.append('maple')
     if entry.mathematica_programs and len(entry.mathematica_programs) > 0:
@@ -43,16 +49,20 @@ def process_oeis_entry(oeis_entry):
     if entry.other_programs and entry.other_programs.find('(PARI)') >= 0:
         keywords.append('pari')
     prefix = int(entry.oeis_id/1000)
-    java_path = '/tmp/joeis/src/irvine/oeis/a{:03}/A{:06}.java'.format(prefix, entry.oeis_id)
+    java_path = os.path.join(java_programs_path, 'src/irvine/oeis/a{:03}/A{:06}.java'.format(prefix, entry.oeis_id))
     if os.path.exists(java_path):
         keywords.append('java')
-    loda_path = os.path.join(os.path.expanduser('~'), 'loda', 'programs', 'oeis', '{:03}'.format(prefix), 'A{:06}.asm'.format(entry.oeis_id))
+    loda_path = os.path.join(loda_programs_path, 'oeis', '{:03}'.format(prefix), 'A{:06}.asm'.format(entry.oeis_id))
     if os.path.exists(loda_path):
         keywords.append('loda')
         with open(loda_path) as loda_file:
             for line in loda_file:
                 if line.startswith('; Submitted by '):
                     contributors.append(line[14:].strip())
+                if line.startswith('; Formula:'):
+                    keywords.append('loda-formula')
+                if line.strip().startswith('lpb'):
+                    keywords.append('loda-loop')
     result = (
         entry.oeis_id,
         entry.name,
@@ -98,14 +108,20 @@ def update_repo(url, path):
 
 def main():
     # update joeis
-    update_repo('https://github.com/archmageirvine/joeis.git', '/tmp/joeis')
+    update_repo('https://github.com/archmageirvine/joeis.git', java_programs_path)
 
     # update loda
-    loda_bin = os.path.join(os.path.expanduser('~'), 'loda', 'bin', 'loda')
-    p = subprocess.run([loda_bin, 'update'])
-    if p.returncode != 0:
-        logger.error('error updating loda')
-        exit(1)
+    loda_home = os.path.join(os.path.expanduser('~'), 'loda')
+    if os.path.isdir(loda_home):
+        global loda_programs_path
+        loda_programs_path = os.path.join(loda_home, 'programs')
+        loda_bin = os.path.join(loda_home, 'bin', 'loda')
+        p = subprocess.run([loda_bin, 'update'])
+        if p.returncode != 0:
+            logger.error('error updating loda')
+            exit(1)
+    else:
+        update_repo('https://github.com/loda-lang/loda-programs.git', loda_programs_path)
 
     # update oeis
     os.makedirs('logfiles', exist_ok=True)

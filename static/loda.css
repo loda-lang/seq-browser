@@ -21,6 +21,7 @@ a.page-link.is-active {
     padding-left: 5px;
     padding-right: 5px;
     color: #000000;
+    white-space: nowrap;
 }
 .keyword-plus {
     background: #BCE29E;
