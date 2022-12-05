@@ -17,6 +17,5 @@ pip3 install Flask
 Start the app:
 
 ```bash
-export FLASK_APP=seq-browser
-flask run
+flask --app seq-browser run
 ```

@@ -1,4 +1,5 @@
 import flask
+import re
 import sqlite3
 import keywords
 
@@ -87,17 +88,25 @@ def index():
     if not search:
         search = ''
     conditions = []
-    if isinstance(active_keywords, str) and len(active_keywords) > 0:
-        for k in active_keywords.split(','):
-            k = k.strip()
-            if len(k) == 0:
-                continue
-            if k[0]=='-':
-                conditions.append('keywords NOT LIKE \'%{}%\''.format(k[1:]))
-            else:
-                conditions.append('keywords LIKE \'%{}%\''.format(k))
-    if isinstance(search, str) and len(search) > 0:
-        conditions.append('(oeis_id LIKE "%{}%" OR name LIKE "%{}%" OR contributors LIKE "%{}%")'.format(search, search, search))
+    if not active_keywords:
+        active_keywords = ''
+    for k in active_keywords.split(','):
+        k = k.strip().lower()
+        if len(k) == 0:
+            continue
+        if k[0]=='-':
+            conditions.append('keywords NOT LIKE \'%{}%\''.format(k[1:]))
+        else:
+            conditions.append('keywords LIKE \'%{}%\''.format(k))
+    if not search:
+        search = ''
+    if len(search) > 0:
+        s = search.strip().lower()
+        id_cond = ''
+        if re.match(r"a[0-9]+", s):
+            id = int(s[1:])
+            id_cond = 'oeis_id = {} OR'.format(id)
+        conditions.append('({} LOWER(name) LIKE "%{}%" OR LOWER(contributors) LIKE "%{}%")'.format(id_cond, s, s))
     where = ''
     if len(conditions) > 0:
         where = 'WHERE {}'.format(' AND '.join(conditions))
