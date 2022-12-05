@@ -83,9 +83,11 @@ def index():
     else:
         start = 1
     active_keywords = flask.request.args.get('keywords')
-    where = ''
-    if isinstance(active_keywords, str):
-        conditions = []
+    search = flask.request.args.get('search')
+    if not search:
+        search = ''
+    conditions = []
+    if isinstance(active_keywords, str) and len(active_keywords) > 0:
         for k in active_keywords.split(','):
             k = k.strip()
             if len(k) == 0:
@@ -94,15 +96,19 @@ def index():
                 conditions.append('keywords NOT LIKE \'%{}%\''.format(k[1:]))
             else:
                 conditions.append('keywords LIKE \'%{}%\''.format(k))
-        if len(conditions) > 0:
-            where = 'WHERE {}'.format(' AND '.join(conditions))
-    print(where)
+    if isinstance(search, str) and len(search) > 0:
+        conditions.append('(oeis_id LIKE "%{}%" OR name LIKE "%{}%" OR contributors LIKE "%{}%")'.format(search, search, search))
+    where = ''
+    if len(conditions) > 0:
+        where = 'WHERE {}'.format(' AND '.join(conditions))
+        print(where)
     count = conn.execute('SELECT count(*) FROM seq_entries {}'.format(where)).fetchall()[0][0]
     batch = 100
     entries = conn.execute('SELECT * FROM seq_entries {} LIMIT {} OFFSET {}'.format(where, batch, start-1)).fetchall()
     end = min(count, start - 1 + batch)
     conn.close()
     return flask.render_template('index.html',
+                                 search=search,
                                  batch=batch,
                                  count=count,
                                  start=start,

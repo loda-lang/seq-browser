@@ -2,9 +2,16 @@
 
 {% block content %}
 
-<p>Filter by keywords:
+
+<p>
+    <form action="{{ url_for('index') }}" method="get">
+    Search: <input type="text" name="search" value="{{ search }}" onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }">
+    <input type="hidden" name="keywords" value="{{ active_keywords }}">
+    <input type="hidden" name="start" value="{{ start }}">
+    </form>
+    Keywords:
     {% for k in all_keywords %}
-    <a href="{{ url_for('index', start=start, keywords=switch_keyword(k, active_keywords)) }}"><span
+    <a href="{{ url_for('index', search=search, keywords=switch_keyword(k, active_keywords), start=start) }}"><span
             title="{{ keyword_descriptions[k] }}" class="keyword-{{ style_keyword(k, active_keywords) }}">{{
             select_keyword(k, active_keywords) }}</span></a>
     {% endfor %}
@@ -30,12 +37,10 @@
 
 {% include 'pages.html' %}
 
-<br>
-<br>
-<p>
-    License Info: See
+<p align="center">
+    <a target="_blank" href="https://github.com/loda-lang/seq-browser/issues">Report an issue</a>. <br> <br>
     <a target="_blank" href="http://oeis.org/wiki/The_OEIS_End-User_License_Agreement">OEIS End-User License
-        Agreement</a>.
+        Agreement</a>. <br>
     LODA is published under <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
 </p>
 
