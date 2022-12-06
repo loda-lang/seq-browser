@@ -126,3 +126,9 @@ def index():
                                  all_keywords=keywords.get_keywords(),
                                  keyword_descriptions=keywords.get_keyword_descriptions(),
                                  active_keywords=active_keywords)
+
+@app.route('/robots.txt')
+def noindex():
+    r = flask.Response(response="User-Agent: *\nDisallow: /\n", status=200, mimetype="text/plain")
+    r.headers["Content-Type"] = "text/plain; charset=utf-8"
+    return r
