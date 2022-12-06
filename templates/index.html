@@ -7,7 +7,6 @@
     <form action="{{ url_for('index') }}" method="get">
     Search: <input type="text" name="search" value="{{ search }}" onkeydown="if (event.keyCode == 13) { this.form.submit(); return false; }">
     <input type="hidden" name="keywords" value="{{ active_keywords }}">
-    <input type="hidden" name="start" value="{{ start }}">
     </form>
     Keywords:
     {% for k in all_keywords %}
