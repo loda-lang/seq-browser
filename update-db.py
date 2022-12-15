@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 java_programs_path = '/tmp/joeis'
 loda_programs_path = '/tmp/loda-programs'
+inceval_programs = set()
+logeval_programs = set()
 
 def create_database_schema(dbconn):
     schema = """
@@ -39,9 +41,16 @@ def process_oeis_entry(oeis_entry):
     contributors = []
     # TODO: add also other contributors
     if entry.author and len(entry.author) > 0:
-        contributors.append(entry.author.replace("_", ""))
+        contributors.append(entry.author.replace('_', ''))
     if entry.formulas and len(entry.formulas) > 0:
         keywords.append('formula')
+    desc = ''
+    if entry.comments:
+        desc += entry.comments.lower() + ' '
+    if entry.formulas:
+        desc += entry.formulas.lower()
+    if 'conjecture' in desc or 'it appears' in desc or 'empirical' in desc:
+        keywords.append('conjecture')
     if entry.maple_programs and len(entry.maple_programs) > 0:
         keywords.append('maple')
     if entry.mathematica_programs and len(entry.mathematica_programs) > 0:
@@ -63,6 +72,11 @@ def process_oeis_entry(oeis_entry):
                     keywords.append('loda-formula')
                 if line.strip().startswith('lpb'):
                     keywords.append('loda-loop')
+    if entry.oeis_id in inceval_programs:
+        keywords.append('loda-inceval')
+    if entry.oeis_id in logeval_programs:
+        keywords.append('loda-logeval')
+    keywords.sort()
     result = (
         entry.oeis_id,
         entry.name,
@@ -120,15 +134,27 @@ def main():
         if p.returncode != 0:
             logger.error('error updating loda')
             exit(1)
+        # load info from stats
+        programs_csv = os.path.join(loda_home, 'stats', 'programs.csv')
+        with open(programs_csv) as file:
+            for line in file:
+                entries = line.split(',')
+                if entries[0].isnumeric():
+                    id = int(entries[0])
+                    if int(entries[2]) == 1:
+                        inceval_programs.add(id)
+                    if int(entries[3]) == 1:
+                        logeval_programs.add(id)
     else:
         update_repo('https://github.com/loda-lang/loda-programs.git', loda_programs_path)
 
-    # update oeis
-    os.makedirs('logfiles', exist_ok=True)
-    fetch_oeis_database.main()
+    # update oeis (1 cycle)
+    os.makedirs('log', exist_ok=True)
+    with setup_logging('log/update_oeis.log'):
+        fetch_oeis_database.database_update_cycle('oeis.sqlite3')
 
     # generate final database
-    with setup_logging('logfiles/seqs_parsed.log'):
+    with setup_logging('log/seqs_parsed.log'):
         if os.path.exists('seqs.sqlite3'):
             os.remove('seqs.sqlite3')
         process_database_entries('oeis.sqlite3', 'seqs.sqlite3')
