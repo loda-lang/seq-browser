@@ -141,9 +141,9 @@ def main():
                 entries = line.split(',')
                 if entries[0].isnumeric():
                     id = int(entries[0])
-                    if int(entries[2]) == 1:
-                        inceval_programs.add(id)
                     if int(entries[3]) == 1:
+                        inceval_programs.add(id)
+                    if int(entries[4]) == 1:
                         logeval_programs.add(id)
     else:
         update_repo('https://github.com/loda-lang/loda-programs.git', loda_programs_path)
