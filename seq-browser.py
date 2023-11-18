@@ -22,8 +22,8 @@ def utility_processor():
         id = entry['oeis_id']
         keywords = entry['keywords'].split(',')
         links = []
-        if 'java' in keywords:
-            links.append('<a target="_blank" href="https://github.com/archmageirvine/joeis/blob/master/src/irvine/oeis/a{:03}/A{:06}.java">Java</a>'.format(int(id/1000), id))
+        # if 'java' in keywords:
+        #     links.append('<a target="_blank" href="https://github.com/archmageirvine/joeis/blob/master/src/irvine/oeis/a{:03}/A{:06}.java">Java</a>'.format(int(id/1000), id))
         if 'loda' in keywords:
             links.append('<a target="_blank" href="https://loda-lang.org/edit/?oeis={}">LODA</a>'.format(id))
         if len(links)>0:
