@@ -7,9 +7,18 @@ app = flask.Flask(__name__)
 
 
 def get_db_connection():
-    conn = sqlite3.connect('seqs.sqlite3')
-    conn.row_factory = sqlite3.Row
-    return conn
+    if 'db' not in flask.g:
+        db = sqlite3.connect('seqs.sqlite3')
+        db.row_factory = sqlite3.Row
+        flask.g.db = db
+    return flask.g.db
+
+
+@app.teardown_appcontext
+def teardown_db(exception):
+    db = flask.g.pop('db', None)
+    if db is not None:
+        db.close()
 
 
 @app.context_processor
@@ -77,7 +86,7 @@ def utility_processor():
 
 @app.route('/')
 def index():
-    conn = get_db_connection()
+    db = get_db_connection()
     start = flask.request.args.get('start')
     if start:
         start = max(int(start),1)
@@ -111,11 +120,10 @@ def index():
     if len(conditions) > 0:
         where = 'WHERE {}'.format(' AND '.join(conditions))
         print(where)
-    count = conn.execute('SELECT count(*) FROM seq_entries {}'.format(where)).fetchall()[0][0]
+    count = db.execute('SELECT count(*) FROM seq_entries {}'.format(where)).fetchall()[0][0]
     batch = 100
-    entries = conn.execute('SELECT * FROM seq_entries {} LIMIT {} OFFSET {}'.format(where, batch, start-1)).fetchall()
+    entries = db.execute('SELECT * FROM seq_entries {} LIMIT {} OFFSET {}'.format(where, batch, start-1)).fetchall()
     end = min(count, start - 1 + batch)
-    conn.close()
     return flask.render_template('index.html',
                                  search=search,
                                  batch=batch,
