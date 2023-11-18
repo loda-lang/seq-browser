@@ -16,7 +16,7 @@ def get_keyword_descriptions():
         'frac': 'Numerators or denominators of sequence of rationals',
         'full': 'Finite sequence with all terms available',
         'hard': 'Sequences that are hard to compute',
-        'java': 'Java programs (jOEIS) exist for these sequence',
+#        'java': 'Java programs (jOEIS) exist for these sequence',
         'less': 'Less interesting sequences',
         'loda': 'LODA programs exist for these sequence',
         'loda-formula': 'Formulas generated from a LODA programs exist for these sequences',
