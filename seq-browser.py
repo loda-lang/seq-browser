@@ -8,7 +8,7 @@ app = flask.Flask(__name__)
 
 def get_db_connection():
     if 'db' not in flask.g:
-        db = sqlite3.connect('seqs.sqlite3')
+        db = sqlite3.connect('file:seqs.sqlite3?mode=ro', uri=True)
         db.row_factory = sqlite3.Row
         flask.g.db = db
     return flask.g.db
