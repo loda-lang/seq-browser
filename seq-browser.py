@@ -40,7 +40,7 @@ def utility_processor():
         return ''
 
     def seq_description(entry, active_keywords):
-        if 'loda-formula' in active_keywords:
+        if 'loda-formula' in active_keywords and not '-loda-formula' in active_keywords:
             return entry['name'] + '<br>Formula: ' + entry['loda_formula']
         else:
             return entry['name']
