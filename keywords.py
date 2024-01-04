@@ -13,6 +13,7 @@ def get_keyword_descriptions():
         'eigen': 'Eigensequences',
         'fini': 'Finite sequences',
         'formula': 'Formulas exist in OEIS entries for these sequences',
+        'formula-gf': 'Generating functions exist in OEIS entries for these sequences',
         'frac': 'Numerators or denominators of sequence of rationals',
         'full': 'Finite sequence with all terms available',
         'hard': 'Sequences that are hard to compute',

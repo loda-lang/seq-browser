@@ -52,6 +52,8 @@ def process_oeis_entry(oeis_entry):
         desc += entry.formulas.lower()
     if 'conjecture' in desc or 'it appears' in desc or 'empirical' in desc:
         keywords.append('conjecture')
+    if 'g.f.' in desc:
+        keywords.append('formula-gf')
     if entry.maple_programs and len(entry.maple_programs) > 0:
         keywords.append('maple')
     if entry.mathematica_programs and len(entry.mathematica_programs) > 0:
