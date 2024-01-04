@@ -30,7 +30,7 @@
     {% for entry in entries %}
     <div class="col0"><a target="_blank" href="https://oeis.org/{{ a_number(entry['oeis_id']) }}">{{ a_number(entry['oeis_id'])
             }}</a></div>
-    <div class="col1"><div class="linkbox">{{ prog_links(entry)|safe }}</div><div class="sequence-description">{{ entry['name'] }}</div></div>
+    <div class="col1"><div class="linkbox">{{ prog_links(entry)|safe }}</div><div class="sequence-description">{{ seq_description(entry, active_keywords)|safe }}</div></div>
     {% endfor %}
 </div>
 

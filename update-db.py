@@ -28,7 +28,8 @@ def create_database_schema(dbconn):
                  oeis_id               INTEGER  PRIMARY KEY NOT NULL,
                  name                  TEXT     NOT NULL,
                  keywords              TEXT     NOT NULL,
-                 contributors          TEXT     NOT NULL
+                 contributors          TEXT     NOT NULL,
+                 loda_formula          TEXT     NOT NULL
              );
              """
     dbconn.execute(schema)
@@ -62,6 +63,7 @@ def process_oeis_entry(oeis_entry):
     # if os.path.exists(java_path):
     #     keywords.append('java')
     loda_path = os.path.join(loda_programs_path, 'oeis', '{:03}'.format(prefix), 'A{:06}.asm'.format(entry.oeis_id))
+    loda_formula = ''
     if os.path.exists(loda_path):
         keywords.append('loda')
         with open(loda_path) as loda_file:
@@ -70,6 +72,7 @@ def process_oeis_entry(oeis_entry):
                     contributors.append(line[14:].strip())
                 if line.startswith('; Formula:'):
                     keywords.append('loda-formula')
+                    loda_formula = line.split(':')[1].strip()
                 if line.strip().startswith('lpb'):
                     keywords.append('loda-loop')
     if entry.oeis_id in inceval_programs:
@@ -81,7 +84,8 @@ def process_oeis_entry(oeis_entry):
         entry.oeis_id,
         entry.name,
         ','.join(str(k) for k in keywords),
-        ','.join(str(c) for c in contributors)
+        ','.join(str(c) for c in contributors),
+        loda_formula
     )
     return result
 
@@ -101,7 +105,7 @@ def process_database_entries(file_in, file_out):
                             break
                         logger.log(logging.PROGRESS, "Processing OEIS entries A{:06} to A{:06} ...".format(
                             oeis_entries[0][0], oeis_entries[-1][0]))
-                        query = "INSERT INTO seq_entries(oeis_id, name, keywords, contributors) VALUES (?, ?, ?, ?);"
+                        query = "INSERT INTO seq_entries(oeis_id, name, keywords, contributors, loda_formula) VALUES (?, ?, ?, ?, ?);"
                         dbcursor_out.executemany(query, pool.map(
                             process_oeis_entry, oeis_entries))
                         dbconn_out.commit()

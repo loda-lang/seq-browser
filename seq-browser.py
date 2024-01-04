@@ -39,6 +39,12 @@ def utility_processor():
             return '{}'.format(', '.join(links))
         return ''
 
+    def seq_description(entry, active_keywords):
+        if 'loda-formula' in active_keywords:
+            return entry['name'] + '<br>Formula: ' + entry['loda_formula']
+        else:
+            return entry['name']
+
     def select_keyword(k, active_keywords):
         if isinstance(active_keywords, str):
             for s in active_keywords.split(','):
@@ -79,6 +85,7 @@ def utility_processor():
 
     return dict(a_number=a_number,
                 prog_links=prog_links,
+                seq_description=seq_description,
                 select_keyword=select_keyword,
                 style_keyword=style_keyword,
                 switch_keyword=switch_keyword)
