@@ -45,17 +45,22 @@ def process_oeis_entry(oeis_entry):
         contributors.append(entry.author.replace('_', ''))
     if entry.formulas and len(entry.formulas) > 0:
         keywords.append('formula')
-    desc = ''
+    # extract description
+    desc = ' ' + entry.name
     if entry.comments:
-        desc += entry.comments.lower() + ' '
+        desc += ' ' + entry.comments
     if entry.formulas:
-        desc += entry.formulas.lower()
+        desc += ' ' + entry.formulas
+    desc = desc.lower().replace('\n', ' ')
+    # add keyword based on description
     if 'conjecture' in desc or 'it appears' in desc or 'empirical' in desc:
         keywords.append('conjecture')
-    if 'e.g.f.' in desc:
-        keywords.append('formula-egf')
-    elif 'g.f.' in desc:
-        keywords.append('formula-gf')
+    if 'decimal expansion' in desc:
+        keywords.append('decimal-expansion')
+    if ' e.g.f.' in desc:
+        keywords.append('egf-expansion')
+    if ' g.f.' in desc:
+        keywords.append('gf-expansion')
     if entry.maple_programs and len(entry.maple_programs) > 0:
         keywords.append('maple')
     if entry.mathematica_programs and len(entry.mathematica_programs) > 0:
