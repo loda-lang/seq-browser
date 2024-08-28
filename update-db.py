@@ -15,6 +15,8 @@ from sidneycadot.oeis.timer import start_timer
 from sidneycadot.oeis.oeis_entry import parse_oeis_entry
 
 
+sys.set_int_max_str_digits(20000)
+
 logger = logging.getLogger(__name__)
 
 # java_programs_path = '/tmp/joeis'

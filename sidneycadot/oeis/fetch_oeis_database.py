@@ -190,7 +190,7 @@ def fetch_entries_into_database(dbconn, entries):
 
             batch_size = min(FETCH_BATCH_SIZE, len(entries))
 
-            batch = random.sample(entries, batch_size)
+            batch = random.sample(sorted(entries), batch_size)
 
             logger.info("Fetching data using {} {} for {} out of {} entries ...".format(NUM_WORKERS, "worker" if NUM_WORKERS == 1 else "workers", batch_size, len(entries)))
 
