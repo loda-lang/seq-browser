@@ -15,7 +15,7 @@ from sidneycadot.oeis.timer import start_timer
 from sidneycadot.oeis.oeis_entry import parse_oeis_entry
 
 
-sys.set_int_max_str_digits(20000)
+sys.set_int_max_str_digits(100000)
 
 logger = logging.getLogger(__name__)
 
