@@ -44,7 +44,7 @@ def load_stats() -> tuple:
 def fetch_list(name : str, min_size = 350000) -> list:
     loda_api_base_url = 'http://api.loda-lang.org'
     url = "{}/miner/v1/oeis/{}.gz".format(loda_api_base_url, name)
-    logger.info('fetching {} list'.format(name))
+    logger.info('fetching {}'.format(name))
     cmd = "curl -sO {} && gunzip -f {}.gz".format(url, name)
     p = subprocess.run(cmd, shell=True)
     if p.returncode != 0:
@@ -117,9 +117,19 @@ def extract_details(names: list, authors: list, comments: list, formulas: list, 
             keys.append('pari')
         conts = []
         if authors[i]:
-            author = authors[i].split(',')[0].strip().replace('_', '')
-            if author:
-                conts.append(author)
+            author = ''
+            active = False
+            for c in authors[i]:
+                if c == '_':
+                    if active:
+                        if author:
+                            conts.append(author)
+                        author = ''
+                        active = False
+                    else:
+                        active = True
+                elif active:
+                    author += c
         program = load_program(i, loda_programs_path)
         if program:
             num_loda_programs += 1
