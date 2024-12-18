@@ -93,6 +93,8 @@ def extract_details(names: list, authors: list, comments: list, formulas: list, 
     contributors = [None] * len(names)
     new_keywords = [None] * len(names)
     loda_formulas = [None] * len(names)
+    num_loda_programs = 0
+    num_loda_formulas = 0
     for i in range(len(names)):
         if i % 1000 == 0:
             logger.info('extracting details for entries {}-{}'.format(i, i+999))
@@ -120,6 +122,7 @@ def extract_details(names: list, authors: list, comments: list, formulas: list, 
                 conts.append(author)
         program = load_program(i, loda_programs_path)
         if program:
+            num_loda_programs += 1
             keys.append('loda')
             for line in program:
                 if line.startswith('; Submitted by '):
@@ -127,6 +130,7 @@ def extract_details(names: list, authors: list, comments: list, formulas: list, 
                 if line.startswith('; Formula:'):
                     keys.append('loda-formula')
                     loda_formulas[i] = line[10:].strip()
+                    num_loda_formulas += 1
                 if line.strip().startswith('lpb'):
                     keys.append('loda-loop')
         if i in inceval_programs:
@@ -137,6 +141,7 @@ def extract_details(names: list, authors: list, comments: list, formulas: list, 
         new_keywords[i] = ','.join(keys) if len(keys) > 0 else None
         if len(conts) > 0:
             contributors[i] = ','.join(conts)
+    logger.info('found {} loda programs and {} loda formulas'.format(num_loda_programs, num_loda_formulas))
     return (contributors, new_keywords, loda_formulas)
 
 
@@ -153,7 +158,20 @@ def create_database_schema(dbconn):
     dbconn.execute(schema)
 
 
-def update_seq_entries(dbconn, column, values, batch_size = 10000):
+def insert_new_entries(dbconn, num_entries):
+    query = 'SELECT max(oeis_id) FROM seq_entries;'
+    dbcursor = dbconn.execute(query)
+    current_max_id = int(dbcursor.fetchone()[0])
+    if current_max_id >= num_entries:
+        return
+    new_entries = [ (id,'','','','') for id in range(current_max_id + 1, num_entries) ]
+    logger.info('inserting {} new entries'.format(len(new_entries)))
+    query = 'INSERT INTO seq_entries (oeis_id, name, keywords, contributors, loda_formula) VALUES (?, ?, ?, ?, ?);'
+    dbconn.executemany(query, new_entries)
+    dbconn.commit()
+
+
+def update_entries(dbconn, column, values, batch_size = 10000):
     query = 'UPDATE seq_entries SET {} = ? WHERE oeis_id = ?;'.format(column)
     batch = []
     for i, k in enumerate(values):
@@ -186,10 +204,11 @@ def main():
     try:
         dbconn = sqlite3.connect('seqs.sqlite3')
         create_database_schema(dbconn)
-        update_seq_entries(dbconn, 'name', names)
-        update_seq_entries(dbconn, 'contributors', contributors)
-        update_seq_entries(dbconn, 'keywords', keywords)
-        update_seq_entries(dbconn, 'loda_formula', loda_formulas)
+        insert_new_entries(dbconn, len(names))
+        update_entries(dbconn, 'name', names)
+        update_entries(dbconn, 'contributors', contributors)
+        update_entries(dbconn, 'keywords', keywords)
+        update_entries(dbconn, 'loda_formula', loda_formulas)
     except sqlite3.Error as error:
         logger.error('error while connecting to sqlite', error)
     finally:
