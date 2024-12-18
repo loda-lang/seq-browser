@@ -171,7 +171,7 @@ def main():
     loda_programs_path = update_loda()
     (inceval_programs, logeval_programs) = load_stats()
 
-    names = fetch_list('names', 10000)
+    names = fetch_list('names')
     min_size = len(names)
     authors = fetch_list('authors', min_size)
     comments = fetch_list('comments', min_size)
