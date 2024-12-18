@@ -1,4 +1,6 @@
+import datetime
 import flask
+import os
 import re
 import sqlite3
 import keywords
@@ -131,6 +133,8 @@ def index():
     batch = 100
     entries = db.execute('SELECT * FROM seq_entries {} LIMIT {} OFFSET {}'.format(where, batch, start-1)).fetchall()
     end = min(count, start - 1 + batch)
+    mod_time = os.path.getmtime('seqs.sqlite3')
+    last_updated = datetime.datetime.fromtimestamp(mod_time).strftime('%Y-%m-%d %H:%M:%S')
     return flask.render_template('index.html',
                                  search=search,
                                  batch=batch,
@@ -140,7 +144,8 @@ def index():
                                  entries=entries,
                                  all_keywords=keywords.get_keywords(),
                                  keyword_descriptions=keywords.get_keyword_descriptions(),
-                                 active_keywords=active_keywords)
+                                 active_keywords=active_keywords,
+                                 last_updated=last_updated)
 
 @app.route('/robots.txt')
 def noindex():

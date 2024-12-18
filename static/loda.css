@@ -53,3 +53,7 @@ a.page-link.is-active {
     float: right;
     margin-left: 1em;
 }
+.prefooter {
+    text-align: center;
+    font-size: small;
+}
