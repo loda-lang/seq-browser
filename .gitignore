@@ -1,5 +1,13 @@
 *.gz
 *.log
 *.sqlite3
+*.sqlite3.bak
 __pycache__
 /venv/
+/authors
+/comments
+/formulas
+/keywords
+/programs
+/names
+/seq-browser.out

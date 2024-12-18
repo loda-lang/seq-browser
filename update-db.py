@@ -1,28 +1,159 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
 
 import os
 import sys
 import logging
 import sqlite3
 import subprocess
-import concurrent.futures
-
-sys.path.append('sidneycadot/oeis')
-import sidneycadot.oeis.fetch_oeis_database as fetch_oeis_database
-from sidneycadot.oeis.setup_logging import setup_logging
-from sidneycadot.oeis.exit_scope import close_when_done
-from sidneycadot.oeis.timer import start_timer
-from sidneycadot.oeis.oeis_entry import parse_oeis_entry
 
 
-sys.set_int_max_str_digits(100000)
-
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# java_programs_path = '/tmp/joeis'
-loda_programs_path = '/tmp/loda-programs'
-inceval_programs = set()
-logeval_programs = set()
+
+def update_loda() -> str:
+    logger.info('updating loda')
+    loda_home = os.path.join(os.path.expanduser('~'), 'loda')
+    loda_programs_path = os.path.join(loda_home, 'programs')
+    loda_bin = os.path.join(loda_home, 'bin', 'loda')
+    p = subprocess.run([loda_bin, 'update'])
+    if p.returncode != 0:
+        logger.error('error updating loda')
+        exit(1)
+    return loda_programs_path
+
+
+def load_stats() -> tuple:
+    logger.info('loading stats')
+    loda_home = os.path.join(os.path.expanduser('~'), 'loda')
+    programs_csv = os.path.join(loda_home, 'stats', 'programs.csv')
+    inceval_programs = set()
+    logeval_programs = set()
+    with open(programs_csv) as file:
+        for line in file:
+            entries = line.split(',')
+            if entries[0].isnumeric():
+                id = int(entries[0])
+                if int(entries[3]) == 1:
+                    inceval_programs.add(id)
+                if int(entries[4]) == 1:
+                    logeval_programs.add(id)
+    return (inceval_programs, logeval_programs)
+
+
+def fetch_list(name : str, min_size = 350000) -> list:
+    loda_api_base_url = 'http://api.loda-lang.org'
+    url = "{}/miner/v1/oeis/{}.gz".format(loda_api_base_url, name)
+    logger.info('fetching {}'.format(name))
+    cmd = "curl -sO {} && gunzip -f {}.gz".format(url, name)
+    p = subprocess.run(cmd, shell=True)
+    if p.returncode != 0:
+        logger.error('error fetching {}'.format(name))
+        exit(1)
+    result = [None] * min_size
+    oeis_id = 0
+    content = None
+    with open(name, 'r') as file:
+        for line in file:
+            line = line.strip()
+            if len(line) == 0 or line[0] == '#':
+                continue
+            if line[0] != 'A':
+                logger.error('error parsing {}'.format(line))
+                exit(1)     
+            current_id = int(line[1:7])
+            current_content = line[8:].strip()       
+            if current_id != oeis_id:
+                while oeis_id >= len(result) :
+                    result.append(None)
+                result[oeis_id] = content
+                oeis_id = current_id
+                content = current_content
+            else:
+                content = content + '\n' + current_content
+    if oeis_id != 0 and len(content) > 0:
+        while oeis_id >= len(result) :
+            result.append(None)
+        result[oeis_id] = content
+    return result
+
+
+def load_program(oeis_id: int, loda_programs_path: str) -> str:
+    folder = '{:03}'.format(int(oeis_id/1000))
+    file_name = 'A{:06}.asm'.format(oeis_id)
+    loda_path = os.path.join(loda_programs_path, 'oeis', folder, file_name)
+    if not os.path.exists(loda_path):
+        return None
+    with open(loda_path) as loda_file:
+        return loda_file.readlines()
+
+
+def extract_details(names: list, authors: list, comments: list, formulas: list, keywords: list, programs: list, 
+                    inceval_programs: set, logeval_programs: set, loda_programs_path: str):
+    contributors = [None] * len(names)
+    new_keywords = [None] * len(names)
+    loda_formulas = [None] * len(names)
+    num_loda_programs = 0
+    num_loda_formulas = 0
+    for i in range(len(names)):
+        if i % 1000 == 0:
+            logger.info('extracting details for entries {}-{}'.format(i, i+999))
+        keys = keywords[i].split(',') if keywords[i] else []
+        if formulas[i]:
+            keys.append('formula')
+        desc = names[i] if names[i] else ''
+        if comments[i]:
+            desc += ' ' + comments[i]
+        desc = desc.lower().replace('\n', ' ')
+        if 'conjecture' in desc or 'it appears' in desc or 'empirical' in desc:
+            keys.append('conjecture')
+        if 'decimal expansion' in desc:
+            keys.append('decimal-expansion')
+        if ' e.g.f.' in desc:
+            keys.append('egf-expansion')
+        if ' g.f.' in desc:
+            keys.append('gf-expansion')
+        if programs[i] and programs[i].find('(PARI)') >= 0:
+            keys.append('pari')
+        conts = []
+        if authors[i]:
+            author = ''
+            active = False
+            for c in authors[i]:
+                if c == '_':
+                    if active:
+                        if author:
+                            conts.append(author)
+                        author = ''
+                        active = False
+                    else:
+                        active = True
+                elif active:
+                    author += c
+        program = load_program(i, loda_programs_path)
+        if program:
+            num_loda_programs += 1
+            keys.append('loda')
+            for line in program:
+                if line.startswith('; Submitted by '):
+                    conts.append(line[14:].strip())
+                if line.startswith('; Formula:'):
+                    keys.append('loda-formula')
+                    loda_formulas[i] = line[10:].strip()
+                    num_loda_formulas += 1
+                if line.strip().startswith('lpb'):
+                    keys.append('loda-loop')
+        if i in inceval_programs:
+            keys.append('loda-inceval')
+        if i in logeval_programs:
+            keys.append('loda-logeval')
+        keys.sort()
+        new_keywords[i] = ','.join(keys) if len(keys) > 0 else None
+        if len(conts) > 0:
+            contributors[i] = ','.join(conts)
+    logger.info('found {} loda programs and {} loda formulas'.format(num_loda_programs, num_loda_formulas))
+    return (contributors, new_keywords, loda_formulas)
+
 
 def create_database_schema(dbconn):
     schema = """
@@ -37,142 +168,62 @@ def create_database_schema(dbconn):
     dbconn.execute(schema)
 
 
-def process_oeis_entry(oeis_entry):
-    (oeis_id, main_content, bfile_content) = oeis_entry
-    entry = parse_oeis_entry(oeis_id, main_content, bfile_content)
-    keywords = entry.keywords
-    contributors = []
-    # TODO: add also other contributors
-    if entry.author and len(entry.author) > 0:
-        contributors.append(entry.author.replace('_', ''))
-    if entry.formulas and len(entry.formulas) > 0:
-        keywords.append('formula')
-    # extract description
-    desc = ' ' + entry.name
-    if entry.comments:
-        desc += ' ' + entry.comments
-    if entry.formulas:
-        desc += ' ' + entry.formulas
-    desc = desc.lower().replace('\n', ' ')
-    # add keyword based on description
-    if 'conjecture' in desc or 'it appears' in desc or 'empirical' in desc:
-        keywords.append('conjecture')
-    if 'decimal expansion' in desc:
-        keywords.append('decimal-expansion')
-    if ' e.g.f.' in desc:
-        keywords.append('egf-expansion')
-    if ' g.f.' in desc:
-        keywords.append('gf-expansion')
-    if entry.maple_programs and len(entry.maple_programs) > 0:
-        keywords.append('maple')
-    if entry.mathematica_programs and len(entry.mathematica_programs) > 0:
-        keywords.append('mathematica')
-    if entry.other_programs and entry.other_programs.find('(PARI)') >= 0:
-        keywords.append('pari')
-    prefix = int(entry.oeis_id/1000)
-    # java_path = os.path.join(java_programs_path, 'src/irvine/oeis/a{:03}/A{:06}.java'.format(prefix, entry.oeis_id))
-    # if os.path.exists(java_path):
-    #     keywords.append('java')
-    loda_path = os.path.join(loda_programs_path, 'oeis', '{:03}'.format(prefix), 'A{:06}.asm'.format(entry.oeis_id))
-    loda_formula = ''
-    if os.path.exists(loda_path):
-        keywords.append('loda')
-        with open(loda_path) as loda_file:
-            for line in loda_file:
-                if line.startswith('; Submitted by '):
-                    contributors.append(line[14:].strip())
-                if line.startswith('; Formula:'):
-                    keywords.append('loda-formula')
-                    loda_formula = line.split(':')[1].strip()
-                if line.strip().startswith('lpb'):
-                    keywords.append('loda-loop')
-    if entry.oeis_id in inceval_programs:
-        keywords.append('loda-inceval')
-    if entry.oeis_id in logeval_programs:
-        keywords.append('loda-logeval')
-    keywords.sort()
-    result = (
-        entry.oeis_id,
-        entry.name,
-        ','.join(str(k) for k in keywords),
-        ','.join(str(c) for c in contributors),
-        loda_formula
-    )
-    return result
+def insert_new_entries(dbconn, num_entries):
+    query = 'SELECT max(oeis_id) FROM seq_entries;'
+    dbcursor = dbconn.execute(query)
+    current_max_id = int(dbcursor.fetchone()[0])
+    if current_max_id >= num_entries:
+        return
+    new_entries = [ (id,'','','','') for id in range(current_max_id + 1, num_entries) ]
+    logger.info('inserting {} new entries'.format(len(new_entries)))
+    query = 'INSERT INTO seq_entries (oeis_id, name, keywords, contributors, loda_formula) VALUES (?, ?, ?, ?, ?);'
+    dbconn.executemany(query, new_entries)
+    dbconn.commit()
 
 
-def process_database_entries(file_in, file_out):
-    BATCH_SIZE = 1000
-    with start_timer() as timer:
-        with close_when_done(sqlite3.connect(file_in)) as dbconn_in, close_when_done(dbconn_in.cursor()) as dbcursor_in:
-            with close_when_done(sqlite3.connect(file_out)) as dbconn_out, close_when_done(dbconn_out.cursor()) as dbcursor_out:
-                create_database_schema(dbconn_out)
-                with concurrent.futures.ProcessPoolExecutor() as pool:
-                    dbcursor_in.execute(
-                        "SELECT oeis_id, main_content, bfile_content FROM oeis_entries ORDER BY oeis_id;")
-                    while True:
-                        oeis_entries = dbcursor_in.fetchmany(BATCH_SIZE)
-                        if len(oeis_entries) == 0:
-                            break
-                        logger.log(logging.PROGRESS, "Processing OEIS entries A{:06} to A{:06} ...".format(
-                            oeis_entries[0][0], oeis_entries[-1][0]))
-                        query = "INSERT INTO seq_entries(oeis_id, name, keywords, contributors, loda_formula) VALUES (?, ?, ?, ?, ?);"
-                        dbcursor_out.executemany(query, pool.map(
-                            process_oeis_entry, oeis_entries))
-                        dbconn_out.commit()
-        logger.info("Processed all database entries in {}.".format(
-            timer.duration_string()))
-
-
-def update_repo(url, path):
-    if not os.path.isdir(os.path.join(path, '.git')):
-        p = subprocess.run(['git', 'clone', url, path])
-        if p.returncode != 0:
-            exit(1)
-    else:
-        p = subprocess.run(['git', 'pull'], cwd=path)
-        if p.returncode != 0:
-            exit(1)
+def update_entries(dbconn, column, values, batch_size = 10000):
+    query = 'UPDATE seq_entries SET {} = ? WHERE oeis_id = ?;'.format(column)
+    batch = []
+    for i, k in enumerate(values):
+        if not k:
+            continue
+        batch.append((k, i))
+        if len(batch) == batch_size or i == len(values) - 1:
+            logger.info('updating {} for entries {}-{}'.format(column, i-batch_size, i))
+            dbconn.executemany(query, batch)
+            dbconn.commit()
+            batch = []
 
 
 def main():
-    # update joeis
-    # update_repo('https://github.com/archmageirvine/joeis.git', java_programs_path)
+    loda_programs_path = update_loda()
+    (inceval_programs, logeval_programs) = load_stats()
 
-    # update loda
-    loda_home = os.path.join(os.path.expanduser('~'), 'loda')
-    if os.path.isdir(loda_home):
-        global loda_programs_path
-        loda_programs_path = os.path.join(loda_home, 'programs')
-        loda_bin = os.path.join(loda_home, 'bin', 'loda')
-        p = subprocess.run([loda_bin, 'update'])
-        if p.returncode != 0:
-            logger.error('error updating loda')
-            exit(1)
-        # load info from stats
-        programs_csv = os.path.join(loda_home, 'stats', 'programs.csv')
-        with open(programs_csv) as file:
-            for line in file:
-                entries = line.split(',')
-                if entries[0].isnumeric():
-                    id = int(entries[0])
-                    if int(entries[3]) == 1:
-                        inceval_programs.add(id)
-                    if int(entries[4]) == 1:
-                        logeval_programs.add(id)
-    else:
-        update_repo('https://github.com/loda-lang/loda-programs.git', loda_programs_path)
+    names = fetch_list('names')
+    min_size = len(names)
+    authors = fetch_list('authors', min_size)
+    comments = fetch_list('comments', min_size)
+    formulas = fetch_list('formulas', min_size)
+    keywords = fetch_list('keywords', min_size)
+    programs = fetch_list('programs', min_size)
 
-    # update oeis (1 cycle)
-    os.makedirs('log', exist_ok=True)
-    with setup_logging('log/update_oeis.log'):
-        fetch_oeis_database.database_update_cycle('oeis.sqlite3')
+    (contributors, keywords, loda_formulas) = extract_details(names, authors, comments, formulas, keywords, programs,
+                                                              inceval_programs, logeval_programs, loda_programs_path)
 
-    # generate final database
-    with setup_logging('log/seqs_parsed.log'):
-        if os.path.exists('seqs.sqlite3'):
-            os.remove('seqs.sqlite3')
-        process_database_entries('oeis.sqlite3', 'seqs.sqlite3')
+    logger.info('updating database')
+    try:
+        dbconn = sqlite3.connect('seqs.sqlite3')
+        create_database_schema(dbconn)
+        insert_new_entries(dbconn, len(names))
+        update_entries(dbconn, 'name', names)
+        update_entries(dbconn, 'contributors', contributors)
+        update_entries(dbconn, 'keywords', keywords)
+        update_entries(dbconn, 'loda_formula', loda_formulas)
+    except sqlite3.Error as error:
+        logger.error('error while connecting to sqlite', error)
+    finally:
+        if dbconn:
+            dbconn.close()
 
 
 if __name__ == "__main__":
