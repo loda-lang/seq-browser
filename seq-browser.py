@@ -128,7 +128,6 @@ def index():
     where = ''
     if len(conditions) > 0:
         where = 'WHERE {}'.format(' AND '.join(conditions))
-        print(where)
     count = db.execute('SELECT count(*) FROM seq_entries {}'.format(where)).fetchall()[0][0]
     batch = 100
     entries = db.execute('SELECT * FROM seq_entries {} LIMIT {} OFFSET {}'.format(where, batch, start-1)).fetchall()
