@@ -4,6 +4,7 @@
 *.sqlite3.bak
 __pycache__
 /venv/
+/.venv/
 /authors
 /comments
 /formulas

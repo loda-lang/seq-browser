@@ -1,12 +1,26 @@
 import datetime
 import flask
+import flask_limiter
 import os
 import re
 import sqlite3
 import keywords
 
-app = flask.Flask(__name__)
 
+def get_ipaddr() -> str:
+    # Retrieve the client's IP address from the request
+    # X-Forwarded-For header is used to handle requests behind a proxy
+    ip_address = flask.request.headers.get('X-Forwarded-For', flask.request.remote_addr)
+    return ip_address
+
+
+app = flask.Flask(__name__)
+limiter = flask_limiter.Limiter(
+    get_ipaddr,
+    app=app,
+    default_limits=['200 per day', '50 per hour'],
+    storage_uri='memory://',
+)
 
 def get_db_connection():
     if 'db' not in flask.g:
