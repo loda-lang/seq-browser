@@ -11,7 +11,7 @@ Prepare the Flask App:
 ```bash
 python3 -m venv venv
 . venv/bin/activate
-pip3 install Flask
+pip3 install -r requirements.txt
 ```
 
 Start the app:
