@@ -219,6 +219,7 @@ def main():
         update_entries(dbconn, 'contributors', contributors)
         update_entries(dbconn, 'keywords', keywords)
         update_entries(dbconn, 'loda_formula', loda_formulas)
+        dbconn.execute('pragma optimize;')
     except sqlite3.Error as error:
         logger.error('error while connecting to sqlite', error)
     finally:
