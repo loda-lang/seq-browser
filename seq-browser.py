@@ -7,20 +7,23 @@ import sqlite3
 import keywords
 
 
-def get_ipaddr() -> str:
-    # Retrieve the client's IP address from the request
-    # X-Forwarded-For header is used to handle requests behind a proxy
-    ip_address = flask.request.headers.get('X-Forwarded-For', flask.request.remote_addr)
-    return ip_address
-
 
 app = flask.Flask(__name__)
-limiter = flask_limiter.Limiter(
-    get_ipaddr,
-    app=app,
-    default_limits=['1000 per day', '100 per hour'],
-    storage_uri='memory://',
-)
+
+# Rate limiter disabled (configured in nginx)
+#
+# def get_ipaddr() -> str:
+#     # Retrieve the client's IP address from the request
+#     # X-Forwarded-For header is used to handle requests behind a proxy
+#     ip_address = flask.request.headers.get('X-Forwarded-For', flask.request.remote_addr)
+#     return ip_address
+# 
+#limiter = flask_limiter.Limiter(
+#    get_ipaddr,
+#    app=app,
+#    default_limits=['1000 per day', '100 per hour'],
+#    storage_uri='memory://',
+#)
 
 def get_db_connection():
     if 'db' not in flask.g:
@@ -47,8 +50,6 @@ def utility_processor():
         id = entry['oeis_id']
         keywords = entry['keywords'].split(',')
         links = []
-        # if 'java' in keywords:
-        #     links.append('<a target="_blank" href="https://github.com/archmageirvine/joeis/blob/master/src/irvine/oeis/a{:03}/A{:06}.java">Java</a>'.format(int(id/1000), id))
         if 'loda' in keywords:
             links.append('<a target="_blank" href="https://loda-lang.org/edit/?oeis={}">LODA</a>'.format(id))
         if len(links)>0:
