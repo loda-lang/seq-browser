@@ -127,7 +127,10 @@ def index():
         k = k.strip().lower()
         if len(k) == 0:
             continue
-        if k[0]=='-':
+        stripped = k[1:] if k[0] == '-' else k
+        if not keywords.exists_keyword(stripped):
+            return flask.abort(400, 'Invalid keyword: {}'.format(stripped))
+        if k != stripped:
             conditions.append('keywords NOT LIKE \'%{}%\''.format(k[1:]))
         else:
             conditions.append('keywords LIKE \'%{}%\''.format(k))

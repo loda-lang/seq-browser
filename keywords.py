@@ -45,3 +45,6 @@ def get_keywords():
     keywords = list(descriptions.keys())
     keywords.sort()
     return keywords
+
+def exists_keyword(k : str):
+    return k in get_keyword_descriptions()
